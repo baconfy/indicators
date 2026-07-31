@@ -179,6 +179,11 @@ Every exception implements `IndicatorException` (marker). `InvalidParameterExcep
 ### D9 — Laravel bridge inside the package, optional
 `Bridge/Laravel/IndicatorsServiceProvider` registers `IndicatorManager` as a container singleton. It does **not** bind `Indicator::class` — indicators are values created per bot config at runtime, not container services. `illuminate/support` in `suggest`, never `require`. Auto-discovery via `extra.laravel.providers` (added to composer.json only when the bridge exists — see §9 step 1).
 
+### D10 — Complexity is part of an indicator's contract
+Every indicator computes its full series in a single O(n) pass — rolling sums and recurrences, never re-scanning the window per index (no O(n × period)). This is free of the classic float trade-off: `BigDecimal` `plus()`/`minus()` are exact, so rolling accumulators carry zero drift and stay byte-identical to naive re-summation. Golden fixtures are the equivalence proof for any internal rework.
+
+Micro-optimizations are NOT the goal — complexity class is. The heavy consumer is the historical/backtest path (§11 E1 of the exchanges roadmap and future backtesting); the live tick (a few hundred candles) never notices. Benchmarks stay out of v0; incremental per-tick compute remains §11 E3.
+
 ## 6. Flow of a call (v0)
 
 ```
@@ -203,22 +208,22 @@ app: (new Rsi(period: 14))->compute($candles)
 
 ```json
 {
-    "name": "baconfy/indicators",
-    "require": {
-        "php": "^8.3",
-        "brick/math": "^0.18"
-    },
-    "require-dev": {
-        "pestphp/pest": "^5.0"
-    },
-    "suggest": {
-        "illuminate/support": "To use the Laravel bridge (IndicatorsServiceProvider)"
-    },
-    "autoload": { "psr-4": { "Baconfy\\Indicators\\": "src/" } },
-    "autoload-dev": { "psr-4": { "Baconfy\\Indicators\\Tests\\": "tests/" } },
-    "extra": {
-        "laravel": { "providers": ["Baconfy\\Indicators\\Bridge\\Laravel\\IndicatorsServiceProvider"] }
-    }
+  "name": "baconfy/indicators",
+  "require": {
+    "php": "^8.3",
+    "brick/math": "^0.18"
+  },
+  "require-dev": {
+    "pestphp/pest": "^5.0"
+  },
+  "suggest": {
+    "illuminate/support": "To use the Laravel bridge (IndicatorsServiceProvider)"
+  },
+  "autoload": { "psr-4": { "Baconfy\\Indicators\\": "src/" } },
+  "autoload-dev": { "psr-4": { "Baconfy\\Indicators\\Tests\\": "tests/" } },
+  "extra": {
+    "laravel": { "providers": ["Baconfy\\Indicators\\Bridge\\Laravel\\IndicatorsServiceProvider"] }
+  }
 }
 ```
 Version floors follow the decisions already made in `baconfy/exchanges` (PHP ^8.3, brick/math ^0.18, Pest ^5). If Composer resolves newer, reality wins and this section gets updated.
