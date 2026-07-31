@@ -9,7 +9,6 @@ use Baconfy\Indicators\Data\Candle;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
 use Baconfy\Indicators\Math\Decimal;
 use Brick\Math\BigDecimal;
-use Brick\Math\Exception\MathException;
 
 final readonly class Sma implements Indicator
 {
@@ -25,23 +24,27 @@ final readonly class Sma implements Indicator
     /**
      * @param  list<Candle>  $candles
      * @return list<BigDecimal|null>
-     * @throws MathException
      */
     public function compute(array $candles): array
     {
         $series = [];
 
+        // Rolling window sum: the close entering the window is added, the one
+        // leaving it is subtracted. BigDecimal plus/minus are exact, so this is
+        // mathematically identical to re-summing the window at every index.
+        $sum = BigDecimal::zero();
+
         foreach ($candles as $index => $candle) {
+            $sum = $sum->plus($candle->close);
+
+            if ($index >= $this->period) {
+                $sum = $sum->minus($candles[$index - $this->period]->close);
+            }
+
             if ($index < $this->period - 1) {
                 $series[] = null;
 
                 continue;
-            }
-
-            $sum = BigDecimal::zero();
-
-            for ($offset = $index - $this->period + 1; $offset <= $index; $offset++) {
-                $sum = $sum->plus($candles[$offset]->close);
             }
 
             $series[] = Decimal::divide($sum, $this->period);
