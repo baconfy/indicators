@@ -31,8 +31,7 @@ it('exposes every field it was constructed with', function () {
 it('is readonly', function (string $property) {
     $candle = candle();
 
-    expect(fn () => $candle->{$property} = BigDecimal::of('1'))
-        ->toThrow(Error::class);
+    expect(fn () => $candle->{$property} = BigDecimal::of('1'))->toThrow(Error::class);
 })->with(['open', 'high', 'low', 'close', 'volume']);
 
 it('is a final readonly class', function () {
