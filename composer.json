@@ -1,0 +1,28 @@
+{
+    "name": "baconfy/indicators",
+    "require": {
+        "php": "^8.3",
+        "brick/math": "^0.18"
+    },
+    "require-dev": {
+        "pestphp/pest": "^5.0"
+    },
+    "suggest": {
+        "illuminate/support": "To use the Laravel bridge (IndicatorsServiceProvider)"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Baconfy\\Indicators\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Baconfy\\Indicators\\Tests\\": "tests/"
+        }
+    }
+}
