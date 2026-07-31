@@ -6,6 +6,7 @@ namespace Baconfy\Indicators\Tests\Support;
 
 use Baconfy\Indicators\Data\Candle;
 use Brick\Math\BigDecimal;
+use DateMalformedStringException;
 use DateTimeImmutable;
 
 final class CandleFactory
@@ -16,6 +17,7 @@ final class CandleFactory
      *
      * @param  list<string|int|float>  $closes
      * @return list<Candle>
+     * @throws DateMalformedStringException
      */
     public static function fromCloses(array $closes): array
     {
@@ -40,6 +42,7 @@ final class CandleFactory
      *
      * @param  list<array{openTime: string, open: string, high: string, low: string, close: string, volume: string}>  $rows
      * @return list<Candle>
+     * @throws DateMalformedStringException
      */
     public static function fromRows(array $rows): array
     {
