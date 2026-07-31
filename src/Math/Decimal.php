@@ -17,7 +17,7 @@ use Brick\Math\RoundingMode;
  */
 final class Decimal
 {
-    public const SCALE = 12;
+    public const int SCALE = 12;
 
     public static function divide(BigDecimal $a, BigDecimal|int $b): BigDecimal
     {

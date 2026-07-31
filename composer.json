@@ -26,6 +26,6 @@
         }
     },
     "scripts": {
-        "test": "./vendor/bin/pest --parallel --compact --tia"
+        "test": "./vendor/bin/pest --parallel --compact"
     }
 }
