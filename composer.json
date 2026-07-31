@@ -1,7 +1,7 @@
 {
     "name": "baconfy/indicators",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "brick/math": "^0.18"
     },
     "require-dev": {
