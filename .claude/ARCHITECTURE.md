@@ -140,6 +140,8 @@ final class Decimal
 ```
 With `BigDecimal`, division **requires** a scale decision (`2/(period+1)` is a repeating decimal). This is a package-wide law, not a per-indicator choice: every division in every indicator goes through this policy. Additions/multiplications stay exact (Brick grows scale as needed); only divisions round. Rationale: two indicators computing "the same" value must never diverge in the 10th digit because each picked its own precision. `Decimal` is `@internal` — not public API.
 
+**Recurrence normalization.** A recurrent state (e.g. the running EMA) is re-quantized to SCALE (HALF_UP) at every step, via the policy. Without this, recurrences that never divide grow their scale unboundedly (+12 digits per bar — O(n²) digit-work over a long series), silently breaking D10. The per-step rounding is < 5e-13 and invisible at any reference precision; golden fixtures are unaffected by construction.
+
 ### D6 — Per-indicator math spec (reference-matching conventions)
 Implementations must match the conventions below — they are the TradingView/Wilder defaults the golden fixtures are generated against. Deviating "equivalent" formulas fail the fixtures by construction.
 
