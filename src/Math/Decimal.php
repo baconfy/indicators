@@ -23,4 +23,17 @@ final class Decimal
     {
         return $a->dividedBy($b, self::SCALE, RoundingMode::HalfUp);
     }
+
+    /**
+     * Re-quantizes a recurrent state to the policy scale.
+     *
+     * A recurrence that never divides (the EMA one multiplies and adds) grows
+     * its scale by SCALE digits per bar, turning an O(n) pass into O(n²) of
+     * digit-work. Normalizing every step bounds it; the error is below 5e-13
+     * and invisible at any reference precision.
+     */
+    public static function round(BigDecimal $value): BigDecimal
+    {
+        return $value->toScale(self::SCALE, RoundingMode::HalfUp);
+    }
 }

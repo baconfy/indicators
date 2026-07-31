@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
 use Baconfy\Indicators\Indicators\Ema;
 use Baconfy\Indicators\Indicators\Sma;
+use Baconfy\Indicators\Math\Decimal;
 use Baconfy\Indicators\Tests\Support\CandleFactory;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;
@@ -106,11 +107,24 @@ it('builds the multiplier through the package math policy', function () {
     $result = (new Ema(period: 2))->compute($candles);
 
     // k = 2/3 rounded by the policy = 0.666666666667; seed = (1+2)/2 = 1.5
-    // ema[2] = (4 - 1.5) * 0.666666666667 + 1.5 = 3.1666666666675, exact.
-    // The scale reaches 24 (seed 12 + multiplier 12) because the recurrence
-    // only multiplies and adds — nothing rounds it back down.
+    // The raw recurrence gives (4 - 1.5) * 0.666666666667 + 1.5 = 3.1666666666675
+    // at scale 24; the policy re-quantizes the state back to scale 12, and the
+    // trailing 5 rounds up.
     expect((string) $result[1])->toBe('1.500000000000')
-        ->and((string) $result[2])->toBe('3.166666666667500000000000');
+        ->and((string) $result[2])->toBe('3.166666666668');
+});
+
+it('keeps every value at the policy scale, however long the series', function () {
+    $candles = CandleFactory::fromCloses(range(1, 50));
+
+    $result = (new Ema(period: 9))->compute($candles);
+    $values = array_values(array_filter($result, static fn (?BigDecimal $value): bool => $value !== null));
+
+    expect($values)->toHaveCount(42);
+
+    foreach ($values as $value) {
+        expect($value->getScale())->toBe(Decimal::SCALE);
+    }
 });
 
 it('collapses to the closes when the period is 1', function () {

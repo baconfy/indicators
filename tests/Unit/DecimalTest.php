@@ -24,6 +24,26 @@ it('keeps an exact division exact, padded to the policy scale', function () {
         ->and($result->isEqualTo('2.5'))->toBeTrue();
 });
 
+it('normalizes a recurrence state down to the policy scale', function () {
+    $result = Decimal::round(BigDecimal::of('3.166666666667500000000000'));
+
+    expect((string) $result)->toBe('3.166666666668')
+        ->and($result->getScale())->toBe(Decimal::SCALE);
+});
+
+it('normalizes HALF_UP, not HALF_EVEN, on an exact tie', function () {
+    // Both ties would land on the even neighbour under HALF_EVEN (…000 and …002).
+    expect((string) Decimal::round(BigDecimal::of('0.0000000000005')))->toBe('0.000000000001')
+        ->and((string) Decimal::round(BigDecimal::of('0.0000000000025')))->toBe('0.000000000003');
+});
+
+it('pads a shorter value up to the policy scale without changing it', function () {
+    $result = Decimal::round(BigDecimal::of('2.5'));
+
+    expect((string) $result)->toBe('2.500000000000')
+        ->and($result->isEqualTo('2.5'))->toBeTrue();
+});
+
 it('accepts the divisor as int or as BigDecimal', function () {
     $fromInt = Decimal::divide(BigDecimal::of(1), 3);
     $fromBigDecimal = Decimal::divide(BigDecimal::of(1), BigDecimal::of(3));

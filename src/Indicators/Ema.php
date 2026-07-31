@@ -49,7 +49,9 @@ final readonly class Ema implements Indicator
                 continue;
             }
 
-            $previous = $candle->close->minus($previous)->multipliedBy($multiplier)->plus($previous);
+            $previous = Decimal::round(
+                $candle->close->minus($previous)->multipliedBy($multiplier)->plus($previous),
+            );
             $series[] = $previous;
         }
 
