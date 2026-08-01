@@ -35,8 +35,6 @@ final readonly class Atr implements Indicator
         $previousClose = null;
 
         foreach ($candles as $index => $candle) {
-            // A true range needs a previous close, so the whole series is shifted
-            // one bar: the first value lands at index period, not period - 1.
             if ($previousClose === null) {
                 $previousClose = $candle->close;
                 $series[] = null;
@@ -47,8 +45,6 @@ final readonly class Atr implements Indicator
             $trueRange = $this->trueRange($candle, $previousClose);
             $previousClose = $candle->close;
 
-            // Each true range is consumed the moment it is produced — the seed
-            // needs only their running sum, never the ranges themselves (D10).
             if ($index < $this->period) {
                 $trueRangeSum = $trueRangeSum->plus($trueRange);
                 $series[] = null;
@@ -57,14 +53,8 @@ final readonly class Atr implements Indicator
             }
 
             $average = $average === null
-                // Seed: the simple mean of the true ranges at indices 1..period.
                 ? Decimal::divide($trueRangeSum->plus($trueRange), $this->period)
-                // Wilder smoothing. The trailing division is the policy's, which
-                // also holds the state at SCALE — no separate normalization.
-                : Decimal::divide(
-                    $average->multipliedBy($this->period - 1)->plus($trueRange),
-                    $this->period,
-                );
+                : Decimal::divide($average->multipliedBy($this->period - 1)->plus($trueRange), $this->period);
 
             $series[] = $average;
         }

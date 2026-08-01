@@ -37,8 +37,6 @@ final readonly class Rsi implements Indicator
         $previousClose = null;
 
         foreach ($candles as $index => $candle) {
-            // A change needs a previous close, so the whole series is shifted
-            // one bar: the first value lands at index period, not period - 1.
             if ($previousClose === null) {
                 $previousClose = $candle->close;
                 $series[] = null;
@@ -64,16 +62,8 @@ final readonly class Rsi implements Indicator
                 $averageGain = Decimal::divide($gainSum->plus($gain), $this->period);
                 $averageLoss = Decimal::divide($lossSum->plus($loss), $this->period);
             } else {
-                // Wilder smoothing. The trailing division is the policy's, which
-                // also holds the state at SCALE — no separate normalization.
-                $averageGain = Decimal::divide(
-                    $averageGain->multipliedBy($this->period - 1)->plus($gain),
-                    $this->period,
-                );
-                $averageLoss = Decimal::divide(
-                    $averageLoss->multipliedBy($this->period - 1)->plus($loss),
-                    $this->period,
-                );
+                $averageGain = Decimal::divide($averageGain->multipliedBy($this->period - 1)->plus($gain), $this->period);
+                $averageLoss = Decimal::divide($averageLoss->multipliedBy($this->period - 1)->plus($loss), $this->period);
             }
 
             $series[] = $this->relativeStrengthIndex($averageGain, $averageLoss);
