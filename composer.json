@@ -5,7 +5,9 @@
         "brick/math": "^0.18"
     },
     "require-dev": {
-        "pestphp/pest": "^5.0"
+        "pestphp/pest": "^5.0",
+        "illuminate/container": "^12.0",
+        "illuminate/support": "^12.0"
     },
     "suggest": {
         "illuminate/support": "To use the Laravel bridge (IndicatorsServiceProvider)"
@@ -23,6 +25,13 @@
     "autoload-dev": {
         "psr-4": {
             "Baconfy\\Indicators\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Baconfy\\Indicators\\Bridge\\Laravel\\IndicatorsServiceProvider"
+            ]
         }
     },
     "scripts": {
