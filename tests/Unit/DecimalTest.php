@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Baconfy\Indicators\Math\Decimal;
 use Brick\Math\BigDecimal;
+use Brick\Math\RoundingMode;
 
 it('rounds a repeating decimal at scale 12', function () {
     $result = Decimal::divide(BigDecimal::of(2), 3);
@@ -42,6 +43,27 @@ it('pads a shorter value up to the policy scale without changing it', function (
 
     expect((string) $result)->toBe('2.500000000000')
         ->and($result->isEqualTo('2.5'))->toBeTrue();
+});
+
+it('keeps a perfect square exact, padded to the policy scale', function () {
+    $result = Decimal::sqrt(BigDecimal::of(9));
+
+    expect((string) $result)->toBe('3.000000000000')
+        ->and($result->getScale())->toBe(Decimal::SCALE);
+});
+
+it('rounds the root instead of truncating it', function () {
+    // sqrt(3) = 1.7320508075688772... — Brick's sqrt($scale) truncates, so asking
+    // it for scale 12 directly would yield ...568. The two guard digits let the
+    // policy rounding see the 8 that follows and carry it up to ...569.
+    $result = Decimal::sqrt(BigDecimal::of(3));
+
+    expect((string) $result)->toBe('1.732050807569')
+        ->and((string) BigDecimal::of(3)->sqrt(Decimal::SCALE, RoundingMode::Down))->toBe('1.732050807568');
+});
+
+it('takes the root of zero', function () {
+    expect((string) Decimal::sqrt(BigDecimal::zero()))->toBe('0.000000000000');
 });
 
 it('accepts the divisor as int or as BigDecimal', function () {

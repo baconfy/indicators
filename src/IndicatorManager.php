@@ -10,6 +10,7 @@ use Baconfy\Indicators\Exceptions\InvalidIndicatorException;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
 use Baconfy\Indicators\Exceptions\UnknownIndicatorException;
 use Baconfy\Indicators\Indicators\Atr;
+use Baconfy\Indicators\Indicators\BollingerBands;
 use Baconfy\Indicators\Indicators\Ema;
 use Baconfy\Indicators\Indicators\Macd;
 use Baconfy\Indicators\Indicators\Obv;
@@ -31,6 +32,7 @@ final class IndicatorManager
         'obv' => Obv::class,
         'vwma' => Vwma::class,
         'macd' => Macd::class,
+        'bollinger-bands' => BollingerBands::class,
     ];
 
     /**

@@ -36,4 +36,17 @@ final class Decimal
     {
         return $value->toScale(self::SCALE, RoundingMode::HalfUp);
     }
+
+    /**
+     * The policy square root — the only way to take a root in this package.
+     *
+     * Brick truncates the root (0.18 requires the mode to be spelled out — the
+     * scale-only form throws rather than rounding silently), so asking it for the
+     * policy scale directly would drop the digits that decide the rounding. Two
+     * guard digits, then the policy rounding on top.
+     */
+    public static function sqrt(BigDecimal $value): BigDecimal
+    {
+        return self::round($value->sqrt(self::SCALE + 2, RoundingMode::Down));
+    }
 }

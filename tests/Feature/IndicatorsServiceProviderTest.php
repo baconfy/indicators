@@ -46,7 +46,7 @@ it('hands out a manager that already knows the built-in indicators', function ()
     $manager = containerWithProvider()->make(IndicatorManager::class);
 
     expect($manager->available())
-        ->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd']);
+        ->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd', 'bollinger-bands']);
 });
 
 it('keeps every boot concern out of the bridge', function () {
