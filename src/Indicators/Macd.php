@@ -13,11 +13,8 @@ use Brick\Math\Exception\MathException;
 
 final readonly class Macd implements MultiIndicator
 {
-    public function __construct(
-        public int $fast = 12,
-        public int $slow = 26,
-        public int $signal = 9,
-    ) {
+    public function __construct(public int $fast = 12, public int $slow = 26, public int $signal = 9)
+    {
         foreach (['fast' => $fast, 'slow' => $slow, 'signal' => $signal] as $name => $period) {
             if ($period < 1) {
                 throw new InvalidParameterException(
@@ -46,7 +43,7 @@ final readonly class Macd implements MultiIndicator
      */
     public function compute(array $candles): array
     {
-        $closes = array_map(static fn (Candle $candle): BigDecimal => $candle->close, $candles);
+        $closes = array_map(static fn(Candle $candle): BigDecimal => $candle->close, $candles);
 
         $fastLine = Series::ema($closes, $this->fast);
         $slowLine = Series::ema($closes, $this->slow);
