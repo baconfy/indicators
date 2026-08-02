@@ -9,6 +9,7 @@ use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Exceptions\InvalidIndicatorException;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
 use Baconfy\Indicators\Exceptions\UnknownIndicatorException;
+use Baconfy\Indicators\Indicators\Adx;
 use Baconfy\Indicators\Indicators\Atr;
 use Baconfy\Indicators\Indicators\BollingerBands;
 use Baconfy\Indicators\Indicators\Ema;
@@ -35,6 +36,7 @@ final class IndicatorManager
         'macd' => Macd::class,
         'bollinger-bands' => BollingerBands::class,
         'stochastic' => Stochastic::class,
+        'adx' => Adx::class,
     ];
 
     /**

@@ -7,7 +7,7 @@ namespace Baconfy\Indicators\Indicators;
 use Baconfy\Indicators\Contracts\Indicator;
 use Baconfy\Indicators\Data\Candle;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
-use Baconfy\Indicators\Math\Decimal;
+use Baconfy\Indicators\Math\Series;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 
@@ -29,30 +29,9 @@ final readonly class Rma implements Indicator
      */
     public function compute(array $candles): array
     {
-        $series = [];
-        $previous = null;
-        $seedSum = BigDecimal::zero();
-
-        foreach ($candles as $index => $candle) {
-            if ($index < $this->period - 1) {
-                $seedSum = $seedSum->plus($candle->close);
-                $series[] = null;
-
-                continue;
-            }
-
-            if ($previous === null) {
-                $previous = Decimal::divide($seedSum->plus($candle->close), $this->period);
-                $series[] = $previous;
-
-                continue;
-            }
-
-            $previous = Decimal::divide($previous->multipliedBy($this->period - 1)->plus($candle->close), $this->period);
-
-            $series[] = $previous;
-        }
-
-        return $series;
+        return Series::rma(
+            array_map(static fn (Candle $candle): BigDecimal => $candle->close, $candles),
+            $this->period,
+        );
     }
 }

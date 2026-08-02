@@ -58,4 +58,44 @@ final class Series
 
         return $series;
     }
+
+    /**
+     * Wilder's smoothing: seeded at index period - 1 with the simple mean of the
+     * first period values, then rma[i] = (prev*(period - 1) + value[i]) / period —
+     * one O(n) pass, the recurrence inherently bounded to the policy scale by its
+     * own division (D5), so no extra normalization step is needed.
+     *
+     * @param  list<BigDecimal>  $values
+     * @return list<BigDecimal|null> same length as $values, null during warm-up
+     *
+     * @throws MathException
+     */
+    public static function rma(array $values, int $period): array
+    {
+        $series = [];
+        $seedSum = BigDecimal::zero();
+        $previous = null;
+
+        foreach ($values as $index => $value) {
+            if ($index < $period - 1) {
+                $seedSum = $seedSum->plus($value);
+                $series[] = null;
+
+                continue;
+            }
+
+            if ($previous === null) {
+                $previous = Decimal::divide($seedSum->plus($value), $period);
+                $series[] = $previous;
+
+                continue;
+            }
+
+            $previous = Decimal::divide($previous->multipliedBy($period - 1)->plus($value), $period);
+
+            $series[] = $previous;
+        }
+
+        return $series;
+    }
 }
