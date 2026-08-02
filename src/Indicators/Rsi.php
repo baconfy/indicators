@@ -74,7 +74,7 @@ final readonly class Rsi implements Indicator
 
     /**
      * The edge cases are defined, not accidental (D6) — and still emitted at the
-     * policy scale, so the whole series is uniformly scale SCALE.
+     * policy scale, so the whole series is uniformly scale.
      *
      * @throws MathException
      */
