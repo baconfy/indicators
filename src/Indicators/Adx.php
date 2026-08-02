@@ -42,8 +42,6 @@ final readonly class Adx implements MultiIndicator
         $directionalIndex = [];
 
         foreach ($smoothedRange as $index => $range) {
-            // The three RMAs share one warm-up, so a null range means all three
-            // are null; a zero range means a window that never moved at all.
             if ($range === null || $range->isZero()) {
                 $plusDi[] = null;
                 $minusDi[] = null;
@@ -60,9 +58,6 @@ final readonly class Adx implements MultiIndicator
 
             $total = $plus->plus($minus);
 
-            // Two zero DIs are a defined state, not an undefined one (the Rsi
-            // edge-case precedent): no direction at all is a DX of exactly zero,
-            // still emitted at the policy scale.
             $directionalIndex[] = $total->isZero()
                 ? Decimal::round(BigDecimal::zero())
                 : Decimal::divide($plus->minus($minus)->abs()->multipliedBy(100), $total);
@@ -104,8 +99,6 @@ final readonly class Adx implements MultiIndicator
             $up = $candle->high->minus($previous->high);
             $down = $previous->low->minus($candle->low);
 
-            // Strictly greater on both sides: an equal expansion up and down is
-            // no directional movement at all, so a tie zeroes both.
             $plusMovement[] = $up->isGreaterThan($down) && $up->isPositive() ? $up : BigDecimal::zero();
             $minusMovement[] = $down->isGreaterThan($up) && $down->isPositive() ? $down : BigDecimal::zero();
 
