@@ -346,3 +346,6 @@ Wilder's smoothing is a real indicator (SMMA on charts) and the primitive under 
 ### E3 — Incremental compute (unchanged)
 ### E4 — Structural analysis domain
 Swing-pivot primitives and their consumers (market structure, S/R levels, trendlines, volume profile, divergence, correlation) as a separate contract family: window → structured verdicts. Shape to be designed when the bot demonstrates the need; the old app's implementations are the reference material.
+
+### E5 — Built-in map completeness (registration at scale)
+The built-in map is the public naming ledger (names are persisted by consumers and semver-governed) — it stays explicit and hand-written. The real risk at scale is FORGETTING to register: solved by a guard test that scans src/Indicators/ and fails when a class implementing Indicator|MultiIndicator is missing from the map (or mapped twice). Runtime directory scanning is rejected: it couples public names to internal class names, making a class rename an invisible breaking change. Revisit only if a plugin ecosystem ever needs third-party autodiscovery — and even then, via explicit per-class declaration (attribute), never by filename.
