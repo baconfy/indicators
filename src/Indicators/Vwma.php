@@ -53,8 +53,6 @@ final readonly class Vwma implements Indicator
                 continue;
             }
 
-            // A window that traded nothing has no volume-weighted price: undefined,
-            // not zero — and mid-series, so it can be defined again right after.
             $series[] = $volumeSum->isZero() ? null : Decimal::divide($weightedSum, $volumeSum);
         }
 
