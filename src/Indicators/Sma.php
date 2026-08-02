@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Baconfy\Indicators\Indicators;
 
+use Baconfy\Indicators\Attributes\AsIndicator;
 use Baconfy\Indicators\Contracts\Indicator;
 use Baconfy\Indicators\Data\Candle;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
@@ -11,6 +12,7 @@ use Baconfy\Indicators\Math\Decimal;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 
+#[AsIndicator('sma')]
 final readonly class Sma implements Indicator
 {
     public function __construct(public int $period = 9)

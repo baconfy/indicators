@@ -9,41 +9,28 @@ use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Exceptions\InvalidIndicatorException;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
 use Baconfy\Indicators\Exceptions\UnknownIndicatorException;
-use Baconfy\Indicators\Indicators\Adx;
-use Baconfy\Indicators\Indicators\Atr;
-use Baconfy\Indicators\Indicators\BollingerBands;
-use Baconfy\Indicators\Indicators\Ema;
-use Baconfy\Indicators\Indicators\Macd;
-use Baconfy\Indicators\Indicators\Obv;
-use Baconfy\Indicators\Indicators\Rma;
-use Baconfy\Indicators\Indicators\Rsi;
-use Baconfy\Indicators\Indicators\Sma;
-use Baconfy\Indicators\Indicators\Stochastic;
-use Baconfy\Indicators\Indicators\Vwma;
+use Baconfy\Indicators\Support\Discovery;
 use Error;
 
 final class IndicatorManager
 {
+    /**
+     * The built-in map, discovered once per process.
+     *
+     * @var array<string, class-string<Indicator|MultiIndicator>>|null
+     */
+    private static ?array $builtIn = null;
+
     /** @var array<string, class-string<Indicator|MultiIndicator>> */
-    private array $indicators = [
-        'sma' => Sma::class,
-        'ema' => Ema::class,
-        'rsi' => Rsi::class,
-        'atr' => Atr::class,
-        'rma' => Rma::class,
-        'obv' => Obv::class,
-        'vwma' => Vwma::class,
-        'macd' => Macd::class,
-        'bollinger-bands' => BollingerBands::class,
-        'stochastic' => Stochastic::class,
-        'adx' => Adx::class,
-    ];
+    private array $indicators;
 
     /**
      * @param  array<string, class-string<Indicator|MultiIndicator>>  $map  merged over the built-in defaults
      */
     public function __construct(array $map = [])
     {
+        $this->indicators = self::builtIn();
+
         foreach ($map as $name => $indicatorClass) {
             $this->register($name, $indicatorClass);
         }
@@ -89,6 +76,18 @@ final class IndicatorManager
     public function available(): array
     {
         return array_keys($this->indicators);
+    }
+
+    /**
+     * The built-in names are declared by attribute on the classes themselves and
+     * resolved lazily: the filesystem is touched once per process, never per
+     * manager instance (D13).
+     *
+     * @return array<string, class-string<Indicator|MultiIndicator>>
+     */
+    private static function builtIn(): array
+    {
+        return self::$builtIn ??= Discovery::scan(__DIR__.'/Indicators', __NAMESPACE__.'\\Indicators');
     }
 
     private function guardIsIndicator(string $indicatorClass): void

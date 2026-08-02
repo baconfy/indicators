@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Baconfy\Indicators\Indicators;
 
+use Baconfy\Indicators\Attributes\AsIndicator;
 use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Data\Candle;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
@@ -11,6 +12,7 @@ use Baconfy\Indicators\Math\Series;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 
+#[AsIndicator('macd')]
 final readonly class Macd implements MultiIndicator
 {
     public function __construct(public int $fast = 12, public int $slow = 26, public int $signal = 9)

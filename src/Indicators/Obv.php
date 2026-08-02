@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Baconfy\Indicators\Indicators;
 
+use Baconfy\Indicators\Attributes\AsIndicator;
 use Baconfy\Indicators\Contracts\Indicator;
 use Baconfy\Indicators\Data\Candle;
 use Baconfy\Indicators\Math\Decimal;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 
-/**
- * On-Balance Volume — the mirror case of the warm-up law: defined from bar 0,
- * it is the only indicator whose series holds no null at all. The return type
- * stays list<BigDecimal|null> per the contract; it simply never emits the null.
- */
+#[AsIndicator('obv')]
 final readonly class Obv implements Indicator
 {
     /**

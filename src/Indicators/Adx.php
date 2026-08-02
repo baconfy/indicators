@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Baconfy\Indicators\Indicators;
 
+use Baconfy\Indicators\Attributes\AsIndicator;
 use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Data\Candle;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
@@ -12,6 +13,7 @@ use Baconfy\Indicators\Math\Series;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 
+#[AsIndicator('adx')]
 final readonly class Adx implements MultiIndicator
 {
     public function __construct(public int $period = 14)

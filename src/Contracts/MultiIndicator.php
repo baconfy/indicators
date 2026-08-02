@@ -7,11 +7,6 @@ namespace Baconfy\Indicators\Contracts;
 use Baconfy\Indicators\Data\Candle;
 use Brick\Math\BigDecimal;
 
-/**
- * A sibling of Indicator, deliberately not a parent nor a child of it: the
- * single-series contract stays pure — the simple case must not pay for the
- * rich one.
- */
 interface MultiIndicator
 {
     /**

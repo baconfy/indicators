@@ -325,6 +325,29 @@ Manager changes: the guard accepts classes implementing `Indicator` **or** `Mult
 
 Wilder's smoothing is a real indicator (SMMA on charts) and the primitive under RSI/ATR/ADX — so it ships public. Rebuilding `Rsi`/`Atr` on top of it is **allowed but not required**: the golden fixtures are the equivalence proof for any such internal rework. `Adx` composes it from day one.
 
+## D13 — Built-in names are attribute-declared, discovered lazily (new)
+
+Supersedes the "built-in default map" literal of D7: the hand-written array in `IndicatorManager` is gone. Everything else in D7 — `register()`, `make()`, `available()`, the contract guard, the `Error` wrapping — is untouched, and the manager's public behaviour is identical.
+
+**The class declares its own public name.**
+```php
+#[AsIndicator('bollinger-bands')]
+final readonly class BollingerBands implements MultiIndicator
+```
+The name stays what it always was: public API, persisted by consumers, semver-governed. What changes is only *where it is written* — next to the class it names, instead of in a list far away that someone must remember to update.
+
+**Discovery is filename-blind.** `Support\Discovery::scan($directory, $namespace)` (`@internal`) globs `*.php`, derives FQCNs by PSR-4, skips anything implementing neither contract, and reads the name off the attribute. A file name never becomes a public name — that was the original objection to directory scanning, and it still holds: renaming `Vwma.php` must stay an internal change, not an invisible breaking one. Returns `array<string, class-string>` sorted by name, so the map is byte-deterministic across filesystems.
+
+**Two loud failures, both at scan time**, because forgetting to register was the whole risk:
+- a class implementing `Indicator`/`MultiIndicator` with no `AsIndicator` → `InvalidIndicatorException` naming it ("implements a contract but declares no ... name");
+- two classes declaring the same name → `InvalidIndicatorException` naming both. Never last-wins.
+
+**Lazily memoized.** The scan result is cached in a private static, so the filesystem is touched once per process, not once per `new IndicatorManager`.
+
+**`register()` remains the only third-party path.** Discovery scans `src/Indicators/` and nothing else — this is not a plugin ecosystem, and no consumer directory is ever walked.
+
+The completeness guard test (`tests/Unit/BuiltInMapTest.php`) stays exactly as it was, and is now worth more: it checks Discovery's output against an independent scan of the directory, so a bug in Discovery fails the suite instead of hiding inside it.
+
 ## §9 Build order — append (fixtures for ALL new indicators are pre-generated; the EMA-era gate rule applies: if a fixture is missing, STOP)
 
 10. **Rma** — golden + seed/warm-up/scale suite (v0.2 begins).
@@ -347,5 +370,5 @@ Wilder's smoothing is a real indicator (SMMA on charts) and the primitive under 
 ### E4 — Structural analysis domain
 Swing-pivot primitives and their consumers (market structure, S/R levels, trendlines, volume profile, divergence, correlation) as a separate contract family: window → structured verdicts. Shape to be designed when the bot demonstrates the need; the old app's implementations are the reference material.
 
-### E5 — Built-in map completeness (registration at scale)
-The built-in map is the public naming ledger (names are persisted by consumers and semver-governed) — it stays explicit and hand-written. The real risk at scale is FORGETTING to register: solved by a guard test that scans src/Indicators/ and fails when a class implementing Indicator|MultiIndicator is missing from the map (or mapped twice). Runtime directory scanning is rejected: it couples public names to internal class names, making a class rename an invisible breaking change. Revisit only if a plugin ecosystem ever needs third-party autodiscovery — and even then, via explicit per-class declaration (attribute), never by filename.
+### E5 — Built-in map completeness (registration at scale) — RESOLVED
+Landed as **D13**: explicit per-class declaration via the `AsIndicator` attribute, lazily memoized discovery over `src/Indicators/`, and two loud scan-time failures. The original constraint survived intact — names are never derived from filenames.
