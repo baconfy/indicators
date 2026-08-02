@@ -10,6 +10,7 @@ use Baconfy\Indicators\Exceptions\UnknownIndicatorException;
 use Baconfy\Indicators\IndicatorManager;
 use Baconfy\Indicators\Indicators\Atr;
 use Baconfy\Indicators\Indicators\Ema;
+use Baconfy\Indicators\Indicators\Macd;
 use Baconfy\Indicators\Indicators\Obv;
 use Baconfy\Indicators\Indicators\Rma;
 use Baconfy\Indicators\Indicators\Rsi;
@@ -26,6 +27,7 @@ dataset('built-in indicators', [
     ['rma', Rma::class],
     ['obv', Obv::class],
     ['vwma', Vwma::class],
+    ['macd', Macd::class],
 ]);
 
 it('resolves every built-in name to its indicator', function (string $name, string $class) {
@@ -46,17 +48,17 @@ it('makes parameters optional, falling back to the indicator defaults', function
 });
 
 it('rejects an unknown name naming it and the available ones', function () {
-    expect(fn () => (new IndicatorManager)->make('macd'))
+    expect(fn () => (new IndicatorManager)->make('ichimoku'))
         ->toThrow(UnknownIndicatorException::class)
-        ->and(fn () => (new IndicatorManager)->make('macd'))
-        ->toThrow(UnknownIndicatorException::class, 'macd');
+        ->and(fn () => (new IndicatorManager)->make('ichimoku'))
+        ->toThrow(UnknownIndicatorException::class, 'ichimoku');
 });
 
 it('lists the available names in the unknown name message', function () {
     try {
-        (new IndicatorManager)->make('macd');
+        (new IndicatorManager)->make('ichimoku');
     } catch (UnknownIndicatorException $e) {
-        expect($e->getMessage())->toContain('sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma');
+        expect($e->getMessage())->toContain('sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd');
     }
 });
 
@@ -89,7 +91,7 @@ it('registers and resolves a custom indicator', function () {
 
 it('lists the built-in names as available', function () {
     expect((new IndicatorManager)->available())
-        ->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma']);
+        ->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd']);
 });
 
 it('resolves the parameterless obv without any parameters at all', function () {
