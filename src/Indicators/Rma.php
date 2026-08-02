@@ -30,8 +30,8 @@ final readonly class Rma implements Indicator
     public function compute(array $candles): array
     {
         $series = [];
-        $seedSum = BigDecimal::zero();
         $previous = null;
+        $seedSum = BigDecimal::zero();
 
         foreach ($candles as $index => $candle) {
             if ($index < $this->period - 1) {
@@ -48,12 +48,7 @@ final readonly class Rma implements Indicator
                 continue;
             }
 
-            // The division is the policy's, and it is also what bounds the scale:
-            // the recurrence never needs an explicit normalization (D5).
-            $previous = Decimal::divide(
-                $previous->multipliedBy($this->period - 1)->plus($candle->close),
-                $this->period,
-            );
+            $previous = Decimal::divide($previous->multipliedBy($this->period - 1)->plus($candle->close), $this->period);
 
             $series[] = $previous;
         }
