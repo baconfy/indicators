@@ -10,8 +10,11 @@ use Baconfy\Indicators\Exceptions\InvalidParameterException;
 use Baconfy\Indicators\Exceptions\UnknownIndicatorException;
 use Baconfy\Indicators\Indicators\Atr;
 use Baconfy\Indicators\Indicators\Ema;
+use Baconfy\Indicators\Indicators\Obv;
+use Baconfy\Indicators\Indicators\Rma;
 use Baconfy\Indicators\Indicators\Rsi;
 use Baconfy\Indicators\Indicators\Sma;
+use Baconfy\Indicators\Indicators\Vwma;
 use Error;
 
 final class IndicatorManager
@@ -22,6 +25,9 @@ final class IndicatorManager
         'ema' => Ema::class,
         'rsi' => Rsi::class,
         'atr' => Atr::class,
+        'rma' => Rma::class,
+        'obv' => Obv::class,
+        'vwma' => Vwma::class,
     ];
 
     /**

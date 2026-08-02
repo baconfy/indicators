@@ -9,8 +9,11 @@ use Baconfy\Indicators\Exceptions\UnknownIndicatorException;
 use Baconfy\Indicators\IndicatorManager;
 use Baconfy\Indicators\Indicators\Atr;
 use Baconfy\Indicators\Indicators\Ema;
+use Baconfy\Indicators\Indicators\Obv;
+use Baconfy\Indicators\Indicators\Rma;
 use Baconfy\Indicators\Indicators\Rsi;
 use Baconfy\Indicators\Indicators\Sma;
+use Baconfy\Indicators\Indicators\Vwma;
 use Baconfy\Indicators\Tests\Support\FakeIndicator;
 
 dataset('built-in indicators', [
@@ -18,6 +21,9 @@ dataset('built-in indicators', [
     ['ema', Ema::class],
     ['rsi', Rsi::class],
     ['atr', Atr::class],
+    ['rma', Rma::class],
+    ['obv', Obv::class],
+    ['vwma', Vwma::class],
 ]);
 
 it('resolves every built-in name to its indicator', function (string $name, string $class) {
@@ -48,7 +54,7 @@ it('lists the available names in the unknown name message', function () {
     try {
         (new IndicatorManager)->make('macd');
     } catch (UnknownIndicatorException $e) {
-        expect($e->getMessage())->toContain('sma', 'ema', 'rsi', 'atr');
+        expect($e->getMessage())->toContain('sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma');
     }
 });
 
@@ -80,7 +86,17 @@ it('registers and resolves a custom indicator', function () {
 });
 
 it('lists the built-in names as available', function () {
-    expect((new IndicatorManager)->available())->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr']);
+    expect((new IndicatorManager)->available())
+        ->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma']);
+});
+
+it('resolves the parameterless obv without any parameters at all', function () {
+    expect((new IndicatorManager)->make('obv'))->toBeInstanceOf(Obv::class);
+});
+
+it('wraps a parameter handed to the parameterless obv into a package exception', function () {
+    expect(fn () => (new IndicatorManager)->make('obv', ['period' => 14]))
+        ->toThrow(InvalidParameterException::class, Obv::class);
 });
 
 it('refuses to register a class that is not an indicator', function () {
