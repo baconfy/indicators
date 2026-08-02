@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Baconfy\Indicators\Contracts\Indicator;
+use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Exceptions\InvalidIndicatorException;
 use Baconfy\Indicators\Exceptions\InvalidParameterException;
 use Baconfy\Indicators\Exceptions\UnknownIndicatorException;
@@ -15,6 +16,7 @@ use Baconfy\Indicators\Indicators\Rsi;
 use Baconfy\Indicators\Indicators\Sma;
 use Baconfy\Indicators\Indicators\Vwma;
 use Baconfy\Indicators\Tests\Support\FakeIndicator;
+use Baconfy\Indicators\Tests\Support\FakeMultiIndicator;
 
 dataset('built-in indicators', [
     ['sma', Sma::class],
@@ -99,20 +101,39 @@ it('wraps a parameter handed to the parameterless obv into a package exception',
         ->toThrow(InvalidParameterException::class, Obv::class);
 });
 
-it('refuses to register a class that is not an indicator', function () {
+it('refuses to register a class that is neither an indicator nor a multi indicator', function () {
     expect(fn () => (new IndicatorManager)->register('bad', stdClass::class))
         ->toThrow(
             InvalidIndicatorException::class,
-            sprintf('%s must implement %s to be registered as an indicator.', stdClass::class, Indicator::class),
+            sprintf(
+                '%s must implement %s or %s to be registered as an indicator.',
+                stdClass::class,
+                Indicator::class,
+                MultiIndicator::class,
+            ),
         );
 });
 
-it('refuses a constructor supplied map entry that is not an indicator', function () {
+it('refuses a constructor supplied map entry that is neither an indicator nor a multi indicator', function () {
     expect(fn () => new IndicatorManager(map: ['bad' => stdClass::class]))
         ->toThrow(
             InvalidIndicatorException::class,
-            sprintf('%s must implement %s to be registered as an indicator.', stdClass::class, Indicator::class),
+            sprintf(
+                '%s must implement %s or %s to be registered as an indicator.',
+                stdClass::class,
+                Indicator::class,
+                MultiIndicator::class,
+            ),
         );
+});
+
+it('names both acceptable interfaces in the guard message', function () {
+    try {
+        (new IndicatorManager)->register('bad', stdClass::class);
+    } catch (InvalidIndicatorException $e) {
+        expect($e->getMessage())->toContain(Indicator::class)
+            ->and($e->getMessage())->toContain(MultiIndicator::class);
+    }
 });
 
 it('accepts a constructor supplied map entry that is an indicator', function () {
@@ -120,6 +141,34 @@ it('accepts a constructor supplied map entry that is an indicator', function () 
 
     expect($manager->make('fake'))->toBeInstanceOf(FakeIndicator::class)
         ->and($manager->available())->toContain('fake', 'sma');
+});
+
+it('registers and resolves a multi indicator', function () {
+    $manager = new IndicatorManager;
+    $manager->register('fake_multi', FakeMultiIndicator::class);
+
+    expect($manager->make('fake_multi', ['period' => 5]))->toBeInstanceOf(MultiIndicator::class)
+        ->and($manager->make('fake_multi'))->toBeInstanceOf(FakeMultiIndicator::class)
+        ->and($manager->available())->toContain('fake_multi');
+});
+
+it('accepts a constructor supplied map entry that is a multi indicator', function () {
+    $manager = new IndicatorManager(map: ['fake_multi' => FakeMultiIndicator::class]);
+
+    expect($manager->make('fake_multi'))->toBeInstanceOf(MultiIndicator::class)
+        ->and($manager->available())->toContain('fake_multi', 'sma');
+});
+
+it('keeps the two contracts apart when resolving', function () {
+    $manager = new IndicatorManager(map: [
+        'fake' => FakeIndicator::class,
+        'fake_multi' => FakeMultiIndicator::class,
+    ]);
+
+    expect($manager->make('fake'))->toBeInstanceOf(Indicator::class)
+        ->and($manager->make('fake'))->not->toBeInstanceOf(MultiIndicator::class)
+        ->and($manager->make('fake_multi'))->toBeInstanceOf(MultiIndicator::class)
+        ->and($manager->make('fake_multi'))->not->toBeInstanceOf(Indicator::class);
 });
 
 it('returns a new instance per call', function () {
