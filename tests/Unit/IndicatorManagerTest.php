@@ -16,6 +16,7 @@ use Baconfy\Indicators\Indicators\Obv;
 use Baconfy\Indicators\Indicators\Rma;
 use Baconfy\Indicators\Indicators\Rsi;
 use Baconfy\Indicators\Indicators\Sma;
+use Baconfy\Indicators\Indicators\Stochastic;
 use Baconfy\Indicators\Indicators\Vwma;
 use Baconfy\Indicators\Tests\Support\FakeIndicator;
 use Baconfy\Indicators\Tests\Support\FakeMultiIndicator;
@@ -30,6 +31,7 @@ dataset('built-in indicators', [
     ['vwma', Vwma::class],
     ['macd', Macd::class],
     ['bollinger-bands', BollingerBands::class],
+    ['stochastic', Stochastic::class],
 ]);
 
 it('resolves every built-in name to its indicator', function (string $name, string $class) {
@@ -60,7 +62,7 @@ it('lists the available names in the unknown name message', function () {
     try {
         (new IndicatorManager)->make('ichimoku');
     } catch (UnknownIndicatorException $e) {
-        expect($e->getMessage())->toContain('sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd', 'bollinger-bands');
+        expect($e->getMessage())->toContain('sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd', 'bollinger-bands', 'stochastic');
     }
 });
 
@@ -93,7 +95,7 @@ it('registers and resolves a custom indicator', function () {
 
 it('lists the built-in names as available', function () {
     expect((new IndicatorManager)->available())
-        ->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd', 'bollinger-bands']);
+        ->toEqualCanonicalizing(['sma', 'ema', 'rsi', 'atr', 'rma', 'obv', 'vwma', 'macd', 'bollinger-bands', 'stochastic']);
 });
 
 it('resolves the parameterless obv without any parameters at all', function () {

@@ -17,6 +17,7 @@ use Baconfy\Indicators\Indicators\Obv;
 use Baconfy\Indicators\Indicators\Rma;
 use Baconfy\Indicators\Indicators\Rsi;
 use Baconfy\Indicators\Indicators\Sma;
+use Baconfy\Indicators\Indicators\Stochastic;
 use Baconfy\Indicators\Indicators\Vwma;
 use Error;
 
@@ -33,6 +34,7 @@ final class IndicatorManager
         'vwma' => Vwma::class,
         'macd' => Macd::class,
         'bollinger-bands' => BollingerBands::class,
+        'stochastic' => Stochastic::class,
     ];
 
     /**
