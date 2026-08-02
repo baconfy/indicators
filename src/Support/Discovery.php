@@ -9,6 +9,7 @@ use Baconfy\Indicators\Contracts\Indicator;
 use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Exceptions\InvalidIndicatorException;
 use ReflectionClass;
+use ReflectionException;
 
 final class Discovery
 {
@@ -47,6 +48,7 @@ final class Discovery
 
     /**
      * @param  class-string<Indicator|MultiIndicator>  $class
+     * @throws ReflectionException
      */
     private static function declaredName(string $class): string
     {
