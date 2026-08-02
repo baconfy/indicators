@@ -8,13 +8,13 @@ use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Data\Candle;
 use Brick\Math\BigDecimal;
 
-/**
- * A trivial MultiIndicator used to prove the manager resolves registered classes —
- * it computes nothing, it only honours the contract: named series, every one of
- * them index-aligned to the input.
- */
 final readonly class FakeMultiIndicator implements MultiIndicator
 {
+    /**
+     * A trivial MultiIndicator used to prove the manager resolves registered classes —
+     * it computes nothing, it only honours the contract: named series, every one of
+     * them index-aligned to the input.
+     */
     public function __construct(public int $period = 3) {}
 
     /**
