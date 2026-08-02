@@ -261,3 +261,88 @@ Needs standard deviation → square root via `BigDecimal::sqrt($scale)` under th
 
 ### E3 — Incremental compute
 For hot ticks: `computeNext(Candle $candle)` on a stateful session object, keeping `compute()` pure. Enters only if profiling shows full recompute is a real cost (200 candles is nothing).
+
+# baconfy/indicators — v0.2 / v0.3 additions
+
+> Apply these blocks to `.claude/ARCHITECTURE.md`. Each block names its target section.
+
+---
+
+## §1 Goal — replace the scope line
+
+v0 scope (shipped): SMA, EMA, RSI, ATR.
+v0.2 scope: **RMA, OBV, VWMA** (single-series, no new design).
+v0.3 scope: **the MultiIndicator contract (D11)** and **MACD, Bollinger Bands, Stochastic, ADX**.
+
+## D3 — append
+
+`null` also marks a value that is **mathematically undefined mid-series**, not only warm-up: a VWMA window whose total volume is zero, a Stochastic window with no high-low range. Same semantics: "the indicator does not exist here". OBV is the mirror case: defined from bar 0, it has **no leading nulls at all**.
+
+## D5 — append
+
+**Square roots join the policy.** Only `Math\Decimal::sqrt()` may take roots:
+```php
+public static function sqrt(BigDecimal $value): BigDecimal
+{
+    // Brick's sqrt($scale) truncates; two guard digits, then the policy rounding.
+    return self::round($value->sqrt(self::SCALE + 2));
+}
+```
+
+## D6 — append these specs
+
+**RMA(p=14)** — Wilder's smoothing as a public indicator. Seed: SMA of the first `p` closes at index `p-1`; `null` before. After: `rma[i] = (prev*(p-1) + close[i]) / p` (policy division — inherently scale-bounded). No one-bar shift: RMA smooths the raw series, unlike ATR whose TR needs a previous close.
+
+**OBV** — no parameters (the constructor takes none). `obv[0] = 0`; close up → `+volume`, down → `-volume`, flat → carry. No leading nulls. Every value emitted through `Decimal::round()` for scale uniformity (additions alone never reach the policy scale).
+
+**VWMA(p=20)** — `sum(close·volume) / sum(volume)` over the window, two rolling sums (D10). Warm-up nulls `0..p-2`. A window with zero total volume → `null` (mid-series undefined, per D3).
+
+**MACD(fast=12, slow=26, signal=9)** — multi (D11), series `macd`, `signal`, `histogram`. Validation: all `>= 1` AND `slow > fast` → `InvalidParameterException`. Composes the existing `Ema` — EMA math is never duplicated. `macd[i] = emaFast[i] − emaSlow[i]` where both exist (first at `slow-1`). `signal` = EMA(`signal`) computed **over the contiguous valid slice** of the macd line (its seed is the SMA of the slice's first `signal` values → lands at index `slow+signal-2`). `histogram = macd − signal` where both exist. Differences are exact; each series' values inherit the policy scale from the EMAs.
+
+**BollingerBands(period=20, multiplier='2.0')** — multi, series `basis`, `upper`, `lower`. `basis` = SMA(period). Population standard deviation over the same window, O(n) via rolling `sum` and `sumSq` (D10): `variance = (n·sumSq − sum²) / n²` — exact numerator, ONE policy division — then `stdev = Decimal::sqrt(variance)`. Bands: `basis ± multiplier·stdev`, wrapped in `Decimal::round()` (the multiplication grows scale). `multiplier` accepted as int|float|string via `BigDecimal::of`, must be `> 0`.
+
+**Stochastic(k_period=14, k_smooth=3, d_smooth=3)** — multi, series `k`, `d`. `rawK = 100·(close − LL) / (HH − LL)` over `k_period` (policy division); window with zero range → `null`. Rolling HH/LL via **monotonic deques** — O(n), never rescanning the window (D10). `k` = `rawK` when `k_smooth == 1`, else SMA(`k_smooth`) over it; `d` = SMA(`d_smooth`) over `k`; both smoothings yield `null` for any window containing a `null`. All params `>= 1`.
+
+**ADX(period=14)** — multi, series `adx`, `plus_di`, `minus_di`. Bar 0: `+DM = −DM = 0`, `TR = high−low`. Bar i>0: `up = high−prevHigh`, `down = prevLow−low`; `+DM = (up > down && up > 0) ? up : 0`, mirrored for `−DM`; `TR` as in ATR's max. All three smoothed with RMA(period) (first values at `period-1`). `DI± = 100·RMA(DM±)/RMA(TR)` (null while RMA null; null when RMA(TR) is zero). `DX = 100·|DI⁺−DI⁻| / (DI⁺+DI⁻)`; both DIs zero → `DX = 0`. `adx` = RMA(period) over the **contiguous valid slice** of DX (lands at `2·period−2`). All divisions through the policy.
+
+## D11 — `MultiIndicator`: the multi-series contract (new)
+```php
+interface MultiIndicator
+{
+    /**
+     * @param list<Candle> $candles ordered oldest to newest
+     * @return array<string, list<BigDecimal|null>> named series; EVERY series has
+     *         the same length as $candles, index-aligned, null where undefined
+     */
+    public function compute(array $candles): array;
+}
+```
+A **sibling** of `Indicator`, deliberately not a parent/child: the single-series contract stays pure — the simple case must not pay for the rich one (same law as `klines()` vs `klinesBetween()`). The series **names are public API** (renaming one is a breaking change). Multi indicators follow every other law: D3 alignment per series, D4 parameters-as-identity, D5 policy, D10 complexity.
+
+Manager changes: the guard accepts classes implementing `Indicator` **or** `MultiIndicator`; `make()` returns `Indicator|MultiIndicator`; consumers branch on `instanceof` (or `array_is_list()` of the result). Built-in names added along the steps: `rma`, `obv`, `vwma`, `macd`, `bollinger_bands`, `stochastic`, `adx`.
+
+## D12 — `Rma` is public, reuse is optional (new)
+
+Wilder's smoothing is a real indicator (SMMA on charts) and the primitive under RSI/ATR/ADX — so it ships public. Rebuilding `Rsi`/`Atr` on top of it is **allowed but not required**: the golden fixtures are the equivalence proof for any such internal rework. `Adx` composes it from day one.
+
+## §9 Build order — append (fixtures for ALL new indicators are pre-generated; the EMA-era gate rule applies: if a fixture is missing, STOP)
+
+10. **Rma** — golden + seed/warm-up/scale suite (v0.2 begins).
+11. **Obv** — golden (level series from 0) + no-leading-null pin + scale uniformity.
+12. **Vwma** — golden + zero-volume-window null pin + rolling-sums (D10). → **tag v0.2**
+13. **MultiIndicator contract + manager union** — guard accepts both, `FakeMultiIndicator` double, union return pinned. No indicator yet.
+14. **Macd** — first multi; composition over Ema pinned (no duplicated EMA math).
+15. **Decimal::sqrt + BollingerBands** — sqrt tested directly (truncation guard pinned), then the bands.
+16. **Stochastic** — monotonic-deque HH/LL (D10) + zero-range null pin.
+17. **Adx** — composes Rma; the valid-slice second smoothing pinned. → **tag v0.3**
+
+## §10 Out of scope — replace the MACD/Bollinger line and append
+
+- ~~MACD, Bollinger Bands~~ (entering v0.3)
+- **The structural-analysis family stays out by domain boundary, not by laziness**: Swings, MarketStructure, SupportResistance, Trendline, VolumeProfile, Divergence, Correlation read a whole window and return *shapes and verdicts* (pivot indices, levels, lines, booleans, one coefficient) — not per-bar series. Forcing them into `Indicator`/`MultiIndicator` would destroy the uniformity that makes the consumer's generic loop work. They belong to a future structural-analysis contract (or package) with its own laws.
+
+## §11 — replace E1/E2 (both resolved), keep E3, add E4
+
+### E3 — Incremental compute (unchanged)
+### E4 — Structural analysis domain
+Swing-pivot primitives and their consumers (market structure, S/R levels, trendlines, volume profile, divergence, correlation) as a separate contract family: window → structured verdicts. Shape to be designed when the bot demonstrates the need; the old app's implementations are the reference material.
