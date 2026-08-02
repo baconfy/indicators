@@ -26,9 +26,6 @@ final readonly class BollingerBands implements MultiIndicator
             );
         }
 
-        // brick/math 0.18 refuses floats outright (they are lossy), so the float
-        // leg of the accepted union is rendered first — var_export, not a plain
-        // cast, because the cast truncates at the `precision` ini (14 digits).
         $this->multiplier = BigDecimal::of(is_float($multiplier) ? var_export($multiplier, true) : $multiplier);
 
         if ($this->multiplier->isNegativeOrZero()) {
@@ -74,9 +71,6 @@ final readonly class BollingerBands implements MultiIndicator
                 continue;
             }
 
-            // Population variance as (n·sumSq − sum²) / n²: the numerator stays
-            // exact over the rolling accumulators, so each window costs ONE policy
-            // division and never a rescan (D10).
             $variance = Decimal::divide($sumSq->multipliedBy($this->period)->minus($sum->multipliedBy($sum)), $this->period * $this->period);
 
             $band = $this->multiplier->multipliedBy(Decimal::sqrt($variance));
