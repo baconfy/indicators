@@ -58,8 +58,6 @@ final readonly class Stochastic implements MultiIndicator
     {
         $series = [];
 
-        // Plain arrays with head pointers: array_shift would be O(n) per call and
-        // would give back exactly the complexity the deque exists to avoid.
         $highs = [];
         $highsHead = 0;
         $lows = [];
@@ -96,9 +94,6 @@ final readonly class Stochastic implements MultiIndicator
             $lowest = $candles[$lows[$lowsHead]]->low;
             $range = $highest->minus($lowest);
 
-            // A window that went nowhere has no position within its own range:
-            // undefined, not zero — and mid-series, so the next bar can define it
-            // again (D3).
             $series[] = $range->isZero()
                 ? null
                 : Decimal::divide($candle->close->minus($lowest)->multipliedBy(100), $range);
