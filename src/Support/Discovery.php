@@ -10,16 +10,6 @@ use Baconfy\Indicators\Contracts\MultiIndicator;
 use Baconfy\Indicators\Exceptions\InvalidIndicatorException;
 use ReflectionClass;
 
-/**
- * Builds a name => class map out of a PSR-4 directory of indicators.
- *
- * Discovery finds the classes; the ATTRIBUTE names them. A filename never
- * becomes a public name, so renaming a class stays an internal change (D13).
- * Both ways of getting this wrong fail loudly at scan time rather than
- * silently dropping an indicator out of the map.
- *
- * @internal
- */
 final class Discovery
 {
     /**

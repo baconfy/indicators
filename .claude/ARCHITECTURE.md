@@ -159,20 +159,20 @@ All divisions above go through the D5 policy.
 ```php
 final class IndicatorManager
 {
-    /** @param array<string, class-string<Indicator>> $map */
+    /** @param array<string, class-string<Indicator|MultiIndicator>> $map merged over the built-ins */
     public function __construct(array $map = []);
 
     public function register(string $name, string $indicatorClass): void;
     /** @param array<string, int|string|float> $parameters named-argument map, e.g. ['period' => 14] */
-    public function make(string $name, array $parameters = []): Indicator;
+    public function make(string $name, array $parameters = []): Indicator|MultiIndicator;
     /** @return list<string> */
     public function available(): array;
 }
 ```
-- Built-in default map: `['sma' => Sma::class, 'ema' => Ema::class, 'rsi' => Rsi::class, 'atr' => Atr::class]`.
+- The built-ins are **not** a literal in this class: each indicator declares its own public name by attribute, discovered once per process (D13). The names themselves are unchanged and remain public API.
 - The name string is the key the consuming app persists in its bot config — same boundary role as `exchange_connections.driver` in the exchanges package.
 - `make()` spreads `$parameters` as **named arguments**: `new $class(...$parameters)`. An unknown parameter name raises a PHP `Error`; the manager catches it and rethrows `InvalidParameterException` — no raw `Error` escapes (D8).
-- Guards **from day one** (lesson from exchanges): `register()` AND constructor-supplied map entries validate `is_a($class, Indicator::class, true)` → `InvalidIndicatorException`, with the offending class as the message's subject. Built-in defaults are trusted.
+- Guards **from day one** (lesson from exchanges): `register()` AND constructor-supplied map entries validate the class against `Indicator` **or** `MultiIndicator` (D11) → `InvalidIndicatorException`, with the offending class as the message's subject. Built-ins skip this guard because discovery already applied it: a class in `src/Indicators/` that implements neither contract is never picked up at all (D13).
 - Unknown name → `UnknownIndicatorException`. New instance per `make()` call.
 
 ### D8 — Package exceptions, never generic ones
@@ -336,7 +336,7 @@ final readonly class BollingerBands implements MultiIndicator
 ```
 The name stays what it always was: public API, persisted by consumers, semver-governed. What changes is only *where it is written* — next to the class it names, instead of in a list far away that someone must remember to update.
 
-**Discovery is filename-blind.** `Support\Discovery::scan($directory, $namespace)` (`@internal`) globs `*.php`, derives FQCNs by PSR-4, skips anything implementing neither contract, and reads the name off the attribute. A file name never becomes a public name — that was the original objection to directory scanning, and it still holds: renaming `Vwma.php` must stay an internal change, not an invisible breaking one. Returns `array<string, class-string>` sorted by name, so the map is byte-deterministic across filesystems.
+**Discovery is filename-blind.** `Support\Discovery::scan($directory, $namespace)` — internal, not public API, on the same footing as `Math\Decimal` — globs `*.php`, derives FQCNs by PSR-4, skips anything implementing neither contract, and reads the name off the attribute. A file name never becomes a public name — that was the original objection to directory scanning, and it still holds: renaming `Vwma.php` must stay an internal change, not an invisible breaking one. Returns `array<string, class-string>` sorted by name, so the map is byte-deterministic across filesystems.
 
 **Two loud failures, both at scan time**, because forgetting to register was the whole risk:
 - a class implementing `Indicator`/`MultiIndicator` with no `AsIndicator` → `InvalidIndicatorException` naming it ("implements a contract but declares no ... name");

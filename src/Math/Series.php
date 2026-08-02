@@ -7,15 +7,6 @@ namespace Baconfy\Indicators\Math;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 
-/**
- * The recurrences shared by more than one indicator, over plain value series.
- *
- * An indicator reads the candle fields it needs and hands the resulting values
- * here; the math itself is never duplicated (D6: MACD composes the EMA, it does
- * not reimplement it).
- *
- * @internal
- */
 final class Series
 {
     /**
