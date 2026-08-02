@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Baconfy\Indicators\Data\Candle;
 use Baconfy\Indicators\Indicators\Obv;
 use Baconfy\Indicators\Math\Decimal;
 use Baconfy\Indicators\Tests\Support\CandleFactory;
@@ -23,32 +22,6 @@ function obvFixture(): array
 function obvAssertedValues(array $fixture): array
 {
     return array_filter($fixture['expected'], static fn (?string $value): bool => $value !== null);
-}
-
-/**
- * Obv is the second indicator reading a field beyond the close, so it needs
- * candles whose close AND volume both matter.
- *
- * @param  list<string|int|float>  $closes
- * @param  list<string|int|float>  $volumes
- * @return list<Candle>
- */
-function obvCandles(array $closes, array $volumes): array
-{
-    $candles = [];
-
-    foreach (array_values($closes) as $index => $close) {
-        $candles[] = new Candle(
-            openTime: new DateTimeImmutable(sprintf('2024-01-01T00:00:00+00:00 +%d days', $index)),
-            open: BigDecimal::of((string) $close),
-            high: BigDecimal::of((string) $close),
-            low: BigDecimal::of((string) $close),
-            close: BigDecimal::of((string) $close),
-            volume: BigDecimal::of((string) $volumes[$index]),
-        );
-    }
-
-    return $candles;
 }
 
 it('matches the golden fixture at the reference precision', function () {
@@ -82,7 +55,7 @@ it('is defined from bar 0 and never holds a null anywhere in the series', functi
 });
 
 it('adds the volume on an up close, subtracts it on a down close and carries it flat', function () {
-    $candles = obvCandles([10, 12, 11, 11, 15], [5, 100, 40, 7, 60]);
+    $candles = CandleFactory::fromClosesAndVolumes([10, 12, 11, 11, 15], [5, 100, 40, 7, 60]);
 
     $result = (new Obv)->compute($candles);
 
@@ -96,7 +69,7 @@ it('adds the volume on an up close, subtracts it on a down close and carries it 
 });
 
 it('carries the very same value across a flat close', function () {
-    $candles = obvCandles([10, 12, 12, 12, 9], [5, 100, 40, 7, 60]);
+    $candles = CandleFactory::fromClosesAndVolumes([10, 12, 12, 12, 9], [5, 100, 40, 7, 60]);
 
     $result = (new Obv)->compute($candles);
 
@@ -120,7 +93,7 @@ it('keeps every value at the policy scale, even though it only ever adds', funct
 });
 
 it('returns a zeroed single value for a single candle', function () {
-    $candles = obvCandles([42000], ['1.5']);
+    $candles = CandleFactory::fromClosesAndVolumes([42000], ['1.5']);
 
     $result = (new Obv)->compute($candles);
 
